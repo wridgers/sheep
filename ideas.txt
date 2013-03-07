@@ -1,0 +1,11 @@
+Things that win:
+
+ * full window 'experiences'
+ * clever use of mathematical algorithms
+ * use every single byte
+
+Ideas for JS1k:
+
+ * fractals 'do androids dream of electric sheep?' style
+ * ray tracing
+ * a simple game

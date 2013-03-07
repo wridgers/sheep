@@ -1,0 +1,2 @@
+w=c.width=window.innerWidth;h=c.height=window.innerHeight;p=[0.5,0.5];m=[[0.164856,-0.775017,0.664133,0.504859,-0.400526,0.155692],[-0.14321,-0.540632,0.427958,0.0901299,2.14451,2.54161]];window.setInterval(function(){a.fillStyle="#000";a.fillRect(0,0,w,h);for(var b=y=x=0;8E4>b;b++){r=Math.random();g=f=0;for(j in p){g+=p[j];if(r<=g)break;f++}t=m[f][0]*x+m[f][1]*y+m[f][4];y=m[f][2]*x+m[f][3]*y+m[f][5];x=t;plot(x,y,"#fff")}},200);
+function plot(b,d,e,k,l,n){b=30*b+w/2;d=30*d+h/3;a.fillStyle=e;a.fillRect(b,d,0.5,0.5)};
