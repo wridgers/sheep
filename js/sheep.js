@@ -11,16 +11,20 @@
  * f = function chosen randomly
  * g = m[f]
  * h = [global] canvas height
+ *
  * i = iterator for loop
  * j = iterator for loop
- * k = z.data floats
- * l = index of pixal in image buffer
+ * k = iterator for loop
+ *
+ * l = index of pixel in image buffer
+ *
  * m = [global] matrix of coefficients
- * n = 
+ * n = [global] array of palettes
  * o = [global] array of functions
+ *
  * p = 
  * q = 
- * r = x*x + y*y
+ * r = 
  * s = scale value
  * t = temp variable
  * u = scaled x coordinate
@@ -39,7 +43,11 @@
  * W = window
  */
 
-// W=window;
+// TODO list:
+// * better palettes
+// * implement Drake's colouring method
+// * render a good flame by default
+
 M=Math;
 W=window;
 
@@ -47,25 +55,44 @@ W=window;
 w = c.width = W.innerWidth;
 h = c.height = W.innerHeight;
 
-// m = [
-//     [0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
-//     [0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
-// ];
-
 m = [
-    [-R(), R(), -R(), R(), -R(), R()],
-    [R(), -R(), R(), -R(), R(), -R()]
+    [0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
+    [0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
 ];
 
+// m = [
+//     [.5, -.5, R(), .5, -.4, -.1],
+//     [.8, R(), .1, -.5, R(), .2]
+// ];
+
 // colour palette
-// 0: reddish
+// 0: inferno
+// 1: greenish
+// 2: blueish
 n = [
     [
         [0,  '[t*2.5,0,0]'],
         [.25,'[1,(t-.25)*2.5,0]'],
         [.50,'[1-((t-.5)*.4),1,0]'],
         [.75,'[1,1,(t-.75)*2]']
+    // ],
+    // [
+    //     [0,  '[0,t*.5,0]'],
+    //     [.25,'[0,.5,(t-.25)*.1]'],
+    //     [.50,'[0,1-((t-.5)*.2),1]'],
+    //     [.75,'[(t-.75)*2,1,1]']
     ]
+];
+
+// functions
+o = [
+    '[x,y]', // identity
+    '[M.sin(x),M.sin(y)]', // sinusoidal
+    '[x/r2,y/r2]', // spherical
+    '[x*M.sin(r2)-y*M.cos(r2),x*M.cos(r2)+y*M.sin(r2)]', // swirl
+    '[((x-y)*(x+y)/r),(2*x*y)/r]', // horseshoe
+    '[T/M.PI,r-1]', // polar
+    '[r*M.sin(T+r),r*M.cos(T-r)]' // handkerchief
 ];
 
 /*
@@ -83,8 +110,7 @@ function F() {
     // create image buffer
     z = a.createImageData(w,h);
 
-    // random x,y in -1,1 plane
-    // OPT: still works at (0,0)
+    // init. point in x,y plane
     x = 0;
     y = 0;
 
@@ -93,7 +119,8 @@ function F() {
 
     // a while loop is smaller than a for loop
     i = 0;
-    while (i < 10000000) {
+    I = 10000000;
+    while (i < I) {
 
         // pic a function randomly
         g = m[M.floor(R()*m.length)];
@@ -104,11 +131,14 @@ function F() {
         x = t;
 
         // variables for variations
-        r = (x*x + y*y);
+        r2 = (x*x + y*y);
+        r  = M.sqrt(r2);
+        T  = M.atan(x/y);
+        P  = M.atan(y/x);
 
-        // spherical
-        x = x/(r);
-        y = y/(r);
+        t = eval(o[3])[0];
+        y = eval(o[3])[1];
+        x = t;
 
         // scale x and y coordinates to fit in z
         u = M.round(x*(w/2) + (w/2), 0);
@@ -131,20 +161,24 @@ function F() {
         i++;
     }
 
+    // random palette
+    g = n[M.floor(R()*n.length)];
+
     // prepare image buffer
     i = 0;
-    while ( i < 4*w*h ) {
+    while (i < 4*w*h) {
         // logarithmic scale
         t = (M.log(z.data[i+3])/M.log(d));
 
         if (t > 0) {
 
-            for (j in n[0])
-                if (t > n[0][j][0])
-                    q = eval(n[0][j][1]);
+            // eval palette functions
+            for (j in g)
+                if (t > g[j][0])
+                    q = eval(g[j][1]);
 
             // set nicely!
-            z.data[i+0] = 255*q[0];
+            z.data[i]   = 255*q[0];
             z.data[i+1] = 255*q[1];
             z.data[i+2] = 255*q[2];
 
@@ -162,4 +196,3 @@ function F() {
 
 // render flame
 F();
-
