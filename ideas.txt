@@ -6,6 +6,6 @@ Things that win:
 
 Ideas for JS1k:
 
- * fractals 'do androids dream of electric sheep?' style
+ * fractal flames
  * ray tracing
- * a simple game
+ * text -> qr code
