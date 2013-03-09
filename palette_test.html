@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <head>
+        <title>JS1k</title>
+        <meta charset="utf-8" />
+
+        <style>
+            html, body {
+                width:  100%;
+                height: 100%;
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="c"></canvas>
+        <script>
+            var b = document.body;
+            var c = document.getElementsByTagName('canvas')[0];
+            var a = c.getContext('2d');
+            document.body.clientWidth;
+        </script>
+        <script>
+            c.width = 256;
+            c.height = 10;
+
+            // random sample of data
+            R = [
+                Math.random(),
+                Math.random(),
+                Math.random(),
+                Math.random(),
+                Math.random()
+            ];
+
+            // palette array
+            var palette = new Array(256);
+
+            // generate palette
+            for (var i = 0; i < 256; i++) {
+                palette[i] = [
+                    Math.floor(255*(Math.cos(R[1]*Math.sin(i/R[0])))),
+                    0,
+                    0
+                ];
+            }
+
+            // draw!
+            for (var i = 0; i < 256; i++) {
+                a.fillStyle = 'rgb('+palette[i][0]+','+palette[i][1]+','+palette[i][2]+')';
+                a.fillRect(i,0,i+1,10);
+            }
+        </script>
+    </body>
+</html>
