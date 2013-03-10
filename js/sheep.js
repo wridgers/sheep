@@ -51,10 +51,12 @@
  * x = x coordinate
  * y = y coordinate
  * z = [global] image buffer
+ * Z = z.data cache
  */ 
 
 /* TODO list:
  *
+ * brightness correction
  * manual control over focal point and zoom
  * render a good flame by default
  * stop iterating when a good result is acheived
@@ -76,11 +78,15 @@ M=Math;
 W=window;
 
 R=M.random; // saves a lot of bytes!
-P=M.floor;  // saves four bytes!
+
+// P=M.floor;  // saves four bytes!
 
 // setup canvas and window
 w = c.width  = W.innerWidth;
 h = c.height = W.innerHeight;
+
+// reassign W because we only need setTimeout now
+W = W.setTimeout;
 
 // anti-aliasing
 // c.style.width = w/2 + 'px';
@@ -109,16 +115,26 @@ m = [
 //     '[r*M.sin(T+r),r*M.cos(T-r)]' // handkerchief
 // ];
 
+// OPT: this could be a function?
 // colour palette
 n = new Array(256);
 
 // OPT: use m instead?
 // random values for colour palette computing
-A = R();
-B = R();
-C = R();
+// +.3 to make sure we don't get something too darkk
+A = R() + .3;
+B = R() + .3;
+C = R() + .3;
 
 // array of trig shuffled trig functions
+//
+// tan gives dark -> high
+// sin gives dark -> medium
+// cos gives dark -> low
+//
+// shuffling them gives dark -> random medium colour -> random high colour
+// 
+// OPT: is there a nicer way to do this?
 O = [M.tan,M.sin,M.cos].sort(function(){return .5 - R() });
 
 // precompute palette
@@ -126,9 +142,9 @@ i = 256;
 while(i--) {
     j=i/256;
     n[i] = [
-        O[0](j)*i*(A+.3), 
-        O[1](j)*i*(B+.3), 
-        O[2](j)*i*(C+.3) 
+        O[0](j)*i*A, 
+        O[1](j)*i*B, 
+        O[2](j)*i*C 
     ];
 }
 
@@ -136,11 +152,8 @@ while(i--) {
 H = new Array(w*h);
 
 // init. point in x,y plane
-x = 0;
-y = 0;
-
-// track largest pixel hit
-d = 0;
+// and d to track largest pixel hit
+x = y = d = 0;
 
 /*
  * Render a flame to canvas
@@ -152,16 +165,17 @@ function F() {
     while (i--) {
 
         // pic a function randomly
-        g = m[P(R()*m.length)];
+        // ~~ is the same as Math.floor (and faster)
+        g = m[~~(R()*m.length)];
 
         // linear equations
         t = g[0] * x + g[1] * y + g[4];
         y = g[2] * x + g[3] * y + g[5];
-        x = t;
+        // x = t;
 
         // variables for variations
         // OPT: remove the ones we don't use
-        r2 = (x*x + y*y);
+        j = t*t + y*y;
         // r  = M.sqrt(r2);
         // T  = M.atan(x/y);
         // P  = M.atan(y/x);
@@ -170,25 +184,21 @@ function F() {
         // y = eval(o[2])[1];
         // x = t;
 
-        t = x/r2;
-        y = y/r2;
-        x = t;
+        y = y/j;
+        x = t/j;
 
+        // OPT: rearrange equations to make them smaller
         // scale x and y coordinates to fit in z
-
-        u = P(x*(w/5) + (w/5));
-        v = P(y*(h/5) + (h));
+        // ~~ is the same as Math.floor (and faster)
+        u = ~~( x*(w/5) + w/5 );
+        v = ~~(y*(h/5) + h);
 
         // calculate location of pixel in image buffer
         l = u*w + v;
 
-        // if undefined, then make zero
-        // this negates the need for a loop to zero the array
-        if (H[l] == undefined) 
-            H[l] = 0;
-
-        // add hit to histogram
-        H[l]++;
+        // if not defined, make it 1
+        // otherwise add 1
+        H[l] = H[l] ? H[l]+1 : 1;
 
         // keep largest hit
         if (H[l] > d)
@@ -206,35 +216,39 @@ function D() {
 
     // create image buffer
     z = a.createImageData(w,h);
+    Z = z.data;
 
     // prepare image buffer
     i = w*h;
     while (i--) {
         // logarithmic scale
-        t = (M.log(H[i])/M.log(d));
+        t = M.log(H[i])/M.log(d);
 
-        // OPT: removing this if statement would be nice.
-        if (t > 0) {
-            // get colour triple from palette
-            q = n[P(255*t)]; 
+        // if it's negative, make it zero
+        t*=(t>=0);
 
-            // set nicely!
-            z.data[4*i]   = q[0]; // red
-            z.data[4*i+1] = q[1]; // green
-            z.data[4*i+2] = q[2]; // blue
-        }
+        // get colour triple from palette
+        // ~~ is the same as Math.floor (and faster)
+        q = n[~~(255*t)]; 
+
+        // cache 4*i
+        j=4*i;
+
+        // set nicely!
+        Z[j]   = q[0]; // red
+        Z[j+1] = q[1]; // green
+        Z[j+2] = q[2]; // blue
 
         // set alpha to full
-        z.data[4*i+3] = 255;
+        Z[j+3] = 255;
     }
     
     // copy buffer to canvas
     a.putImageData(z, 0, 0);
 
     // iterate again
-    W.setTimeout(F, 10);
+    W(F, 9);
 }
 
 // render flame
-// setting a timeout stops the browser from spending ages loading
-W.setTimeout(F, 10);
+W(F, 9);
