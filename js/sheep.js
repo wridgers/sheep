@@ -1,14 +1,24 @@
-// sheep.js - js1k entry by Will Ridgers
-// render iterative function system fractals!
+// Do Browsers Dream of Electric Sheep?
+// js1k entry by Will Ridgers
 
-// index of variables
 /*
+ * Special thanks to Scott Draves for his amazing work on the fractal flame
+ * algorithm and the electric sheep wallpaper. 
+ */
+
+/* index of variables
+ *
  * a = [global] canvas 2d context
+ * A = random var
  * b = [global] document.body
+ * B = random var
  * c = [global] canvas element
+ * C = random var
+ *
  * d = largest hit per pixel
  * e = colour coordinate
  * f = function chosen randomly
+ * F = render a flame
  * g = m[f]
  * h = [global] canvas height
  * H = [global] histogram
@@ -20,50 +30,62 @@
  * l = index of pixel in image buffer
  *
  * m = [global] matrix of coefficients
+ * M = Math
  * n = [global] array of palettes
  * N = [global] palette that has been chosen
  * o = [global] array of functions
+ * O = [global] array of trig functions
  *
  * p = 
+ * P = M.floor
  * q = 
  * r = 
+ * R = Math.random
  * s = scale value
  * t = temp variable
+ * T = M.round
  * u = scaled x coordinate
  * v = scaled y coordinate
  * w = [global] canvas width
+ * W = window
  * x = x coordinate
  * y = y coordinate
  * z = [global] image buffer
  */ 
 
-// index of functions, and aliases
-/*
- * F = render a flame
- * R = random number [0-1]
- * M = Math
- * W = window
+/* TODO list:
+ *
+ * manual control over focal point and zoom
+ * render a good flame by default
+ * stop iterating when a good result is acheived
  */
 
-// TODO list:
-// * display render progress
-// * implement Drake's colouring method
-// * better palettes
-// * render a good flame by default
+/* Extra space?
+ *
+ * more advanced fractals
+ * save as image button
+ * edit/share fractals
+ * track and share seeds?
+ */
 
+// open a new window with canvas as png, for saving
+// W.open(c.toDataURL('image/png'));
+
+// very useful aliases
 M=Math;
 W=window;
+
+R=M.random; // saves a lot of bytes!
+P=M.floor;  // saves four bytes!
 
 // setup canvas and window
 w = c.width  = W.innerWidth;
 h = c.height = W.innerHeight;
 
 // anti-aliasing
-// NOTE: this doesn't seem to improve the quality of the render
-// a huge amount, and this substantially reduces render time, so
-// I have decided to remove it.
 // c.style.width = w/2 + 'px';
 
+// flame coefficients
 // m = [
 //     [0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
 //     [0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
@@ -73,30 +95,6 @@ m = [
     [.5, -.5, R(), .5, -.4, -.1],
     [.8, R(), .1, -.5, R(), .2]
 ];
-
-// colour palette
-// 0: inferno
-// 1: lagoon
-// OPT: precompute a random palette
-n = [
-    [
-        [0,  '[t*2.5,0,0]'],
-        [.25,'[1,(t-.25)*2.5,0]'],
-        [.50,'[1-((t-.5)*.4),1,0]'],
-        [.75,'[1,1,(t-.75)*2]']
-    ],
-    [
-        [0,  '[0,t*.5,0]'],
-        [.25,'[0,.5,(t-.25)*.1]'],
-        [.50,'[0,1-((t-.5)*.2),1]'],
-        [.75,'[(t-.75)*2,1,1]']
-    ]
-];
-
-// random palette
-// OPT: change n.length to final n size
-// OPT: precompute palette leaves no need for this
-N = n[M.floor(R()*n.length)];
 
 // functions
 // OPT: remove the ones we don't use
@@ -111,6 +109,29 @@ N = n[M.floor(R()*n.length)];
 //     '[r*M.sin(T+r),r*M.cos(T-r)]' // handkerchief
 // ];
 
+// colour palette
+n = new Array(256);
+
+// OPT: use m instead?
+// random values for colour palette computing
+A = R();
+B = R();
+C = R();
+
+// array of trig shuffled trig functions
+O = [M.tan,M.sin,M.cos].sort(function(){return .5 - R() });
+
+// precompute palette
+i = 256;
+while(i--) {
+    j=i/256;
+    n[i] = [
+        O[0](j)*i*(A+.3), 
+        O[1](j)*i*(B+.3), 
+        O[2](j)*i*(C+.3) 
+    ];
+}
+
 // histogram, array of hits
 H = new Array(w*h);
 
@@ -122,23 +143,16 @@ y = 0;
 d = 0;
 
 /*
- * Return a random number
- */
-function R() { 
-    return M.random();
-}
-
-/*
  * Render a flame to canvas
  */
-function F(I) {
+function F() {
 
     // a while loop is smaller than a for loop
-    i = 0;
-    while (i < I) {
+    i = 50000;
+    while (i--) {
 
         // pic a function randomly
-        g = m[M.floor(R()*m.length)];
+        g = m[P(R()*m.length)];
 
         // linear equations
         t = g[0] * x + g[1] * y + g[4];
@@ -161,11 +175,17 @@ function F(I) {
         x = t;
 
         // scale x and y coordinates to fit in z
-        u = M.round(x*(w/2) + (w/2), 0);
-        v = M.round(y*(h/2) + (h/2), 0);
+
+        u = P(x*(w/5) + (w/5));
+        v = P(y*(h/5) + (h));
 
         // calculate location of pixel in image buffer
         l = u*w + v;
+
+        // if undefined, then make zero
+        // this negates the need for a loop to zero the array
+        if (H[l] == undefined) 
+            H[l] = 0;
 
         // add hit to histogram
         H[l]++;
@@ -173,9 +193,6 @@ function F(I) {
         // keep largest hit
         if (H[l] > d)
             d = H[l];
-
-        // increase i
-        i++;
     }
 
     // draw to canvas
@@ -184,7 +201,6 @@ function F(I) {
 
 /*
  * Draw the flame based on histogram data
- * Warning: only compatible with logarithmic colouring, not Drake's method.
  */
 function D() {
 
@@ -192,45 +208,33 @@ function D() {
     z = a.createImageData(w,h);
 
     // prepare image buffer
-    i = 0;
-    while (i < w*h) {
+    i = w*h;
+    while (i--) {
         // logarithmic scale
         t = (M.log(H[i])/M.log(d));
 
         // OPT: removing this if statement would be nice.
-
         if (t > 0) {
-            // eval palette functions
-            // OPT: precompute random palette
-            // SPEED: is eval really slow?
-            for (j in N)
-                if (t > N[j][0])
-                    q = eval(N[j][1]);
+            // get colour triple from palette
+            q = n[P(255*t)]; 
 
             // set nicely!
-            z.data[4*i]   = 255*q[0];
-            z.data[4*i+1] = 255*q[1];
-            z.data[4*i+2] = 255*q[2];
+            z.data[4*i]   = q[0]; // red
+            z.data[4*i+1] = q[1]; // green
+            z.data[4*i+2] = q[2]; // blue
         }
 
         // set alpha to full
         z.data[4*i+3] = 255;
-
-        // next quad
-        i++;
     }
     
     // copy buffer to canvas
     a.putImageData(z, 0, 0);
 
-    // do it again!
-    W.setTimeout(F, 10, 50000);
+    // iterate again
+    W.setTimeout(F, 10);
 }
-
-// OPT: I want this to be a for (i in H) kind of loop
-for (var i = 0; i < H.length; i++)
-    H[i] = 0;
 
 // render flame
 // setting a timeout stops the browser from spending ages loading
-W.setTimeout(F, 10, 50000);
+W.setTimeout(F, 10);

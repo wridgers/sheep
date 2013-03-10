@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+    <head>
+        <title>JS1k</title>
+        <meta charset="utf-8" />
+
+        <style>
+            html, body {
+                width:  100%;
+                height: 100%;
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="c"></canvas>
+        <script>
+            var b = document.body;
+            var c = document.getElementsByTagName('canvas')[0];
+            var a = c.getContext('2d');
+            document.body.clientWidth;
+        </script>
+        <script>
+            c.width = 256;
+            c.height = 256;
+
+            // random sample of data
+            R = [
+                Math.random(),
+                Math.random(),
+                Math.random()
+            ];
+
+            // palette array
+            var palette = new Array(256);
+
+            // array of functions
+            var F = [Math.tan,Math.sin,Math.cos];
+
+            // shuffle
+            F.sort(function(){ return .5 - Math.random() });
+
+            // generate palette
+            for (var i = 0; i < 256; i++) {
+
+                var j = i/256;
+
+                palette[i] = [
+                    F[0](j)*(i*R[0]+.5),
+                    F[1](j)*(i*R[1]+.5),
+                    F[2](j)*(i*R[2]+.5),
+                ]
+            }
+
+            // draw palette!
+            for (var i = 0; i < 256; i++) {
+                a.fillStyle = 'rgb('+Math.floor(palette[i][0])+','+Math.floor(palette[i][1])+','+Math.floor(palette[i][2])+')';
+                a.fillRect(i,0,i+1,10);
+            }
+
+            // draw red curve
+            a.beginPath();
+            for (var i = 0; i < 256; i++) 
+                a.lineTo(i, (256-palette[i][0]));
+
+            a.strokeStyle = 'red';
+            a.stroke();
+
+            // draw green curve
+            a.beginPath();
+            for (var i = 0; i < 256; i++) 
+                a.lineTo(i, (256-palette[i][1]));
+
+            a.strokeStyle = 'green';
+            a.stroke();
+
+            // draw bluee curve
+            a.beginPath();
+            for (var i = 0; i < 256; i++) 
+                a.lineTo(i, (256-palette[i][2]));
+
+            a.strokeStyle = 'blue';
+            a.stroke();
+
+        </script>
+    </body>
+</html>
