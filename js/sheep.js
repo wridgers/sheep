@@ -14,7 +14,6 @@
  * B = random var
  * c = [global] canvas element
  * C = random var
- *
  * d = largest hit per pixel
  * e = colour coordinate
  * f = function chosen randomly
@@ -22,52 +21,44 @@
  * g = m[f]
  * h = [global] canvas height
  * H = [global] histogram
- *
  * i = iterator for loop
  * j = iterator for loop
  * k = iterator for loop
- *
  * l = index of pixel in image buffer
- *
  * m = [global] matrix of coefficients
  * M = Math
  * n = [global] array of palettes
  * N = [global] palette that has been chosen
  * o = [global] array of functions
  * O = [global] array of trig functions
- *
  * p = 
- * P = M.floor
  * q = 
  * r = 
  * R = Math.random
  * s = scale value
  * t = temp variable
- * T = M.round
  * u = scaled x coordinate
  * v = scaled y coordinate
  * w = [global] canvas width
- * W = window
+ * W = window, window.setTimeout
  * x = x coordinate
  * y = y coordinate
  * z = [global] image buffer
- * Z = z.data cache
+ * Z = z.data
  */ 
 
 /* TODO list:
  *
- * brightness correction
+ * more advanced fractals
+ * save as image button
+ * edit/share fractals
  * manual control over focal point and zoom
- * render a good flame by default
  * stop iterating when a good result is acheived
+ * render a good flame by default
  */
 
 /* Extra space?
  *
- * more advanced fractals
- * save as image button
- * edit/share fractals
- * track and share seeds?
  */
 
 // open a new window with canvas as png, for saving
@@ -76,10 +67,7 @@
 // very useful aliases
 M=Math;
 W=window;
-
-R=M.random; // saves a lot of bytes!
-
-// P=M.floor;  // saves four bytes!
+R=M.random; 
 
 // setup canvas and window
 w = c.width  = W.innerWidth;
@@ -91,10 +79,22 @@ W = W.setTimeout;
 // anti-aliasing
 // c.style.width = w/2 + 'px';
 
-// flame coefficients
+// flame settings
 // m = [
 //     [0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
 //     [0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
+// ];
+
+// new m example
+// m = [
+//     [r, g, b], // colour triple
+//     [u, v, z], // focus, zoom factor
+//     [ // main iterative functions
+//         [p, t, a, b, c, d, e, f],  // prob, type, coefficients
+//         [p, t, a, b, c, d, e, f],
+//         [p, t, a, b, c, d, e, f]
+//     ],
+//     t // final transformation
 // ];
 
 m = [
@@ -115,10 +115,6 @@ m = [
 //     '[r*M.sin(T+r),r*M.cos(T-r)]' // handkerchief
 // ];
 
-// OPT: this could be a function?
-// colour palette
-n = new Array(256);
-
 // OPT: use m instead?
 // random values for colour palette computing
 // +.3 to make sure we don't get something too darkk
@@ -137,14 +133,12 @@ C = R() + .3;
 // OPT: is there a nicer way to do this?
 O = [M.tan,M.sin,M.cos].sort(function(){return .5 - R() });
 
-// precompute palette
-i = 256;
-while(i--) {
-    j=i/256;
-    n[i] = [
-        O[0](j)*i*A, 
-        O[1](j)*i*B, 
-        O[2](j)*i*C 
+// compute palette based on t value
+function n(i) {
+    return [
+        255*O[0](i)*i*A, 
+        255*O[1](i)*i*B, 
+        255*O[2](i)*i*C 
     ];
 }
 
@@ -224,12 +218,9 @@ function D() {
         // logarithmic scale
         t = M.log(H[i])/M.log(d);
 
-        // if it's negative, make it zero
-        t*=(t>=0);
-
-        // get colour triple from palette
-        // ~~ is the same as Math.floor (and faster)
-        q = n[~~(255*t)]; 
+        // note, t may be negative but it doesn't matter as n is a function
+        // get colour triple from palette function
+        q = n(t); 
 
         // cache 4*i
         j=4*i;
@@ -251,4 +242,5 @@ function D() {
 }
 
 // render flame
-W(F, 9);
+// W(F, 9);
+F();
