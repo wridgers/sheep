@@ -31,7 +31,7 @@
  * N = [global] palette that has been chosen
  * o = [global] array of functions
  * O = [global] array of trig functions
- * p = 
+ * p = [global] count of how many F() calls
  * q = 
  * r = 
  * R = Math.random
@@ -49,11 +49,9 @@
 
 /* TODO list:
  *
- * more advanced fractals
  * save as image button
  * edit/share fractals
  * manual control over focal point and zoom
- * stop iterating when a good result is acheived
  * render a good flame by default
  */
 
@@ -74,7 +72,7 @@ w = c.width  = W.innerWidth;
 h = c.height = W.innerHeight;
 
 // reassign W because we only need setTimeout now
-W = W.setTimeout;
+// W = W.setTimeout;
 
 // anti-aliasing
 // c.style.width = w/2 + 'px';
@@ -98,8 +96,14 @@ W = W.setTimeout;
 // ];
 
 m = [
-    [.5, -.5, R(), .5, -.4, -.1],
-    [.8, R(), .1, -.5, R(), .2]
+    [0, 0, 1],
+    [
+        [2, .5, -.5, R(), .5, -.4, -.1],
+        [1, .8, R(), .1, -.5, R(), .2]
+        // [2, 0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
+        // [2, 0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
+    ],
+    0
 ];
 
 // functions
@@ -147,12 +151,15 @@ H = new Array(w*h);
 
 // init. point in x,y plane
 // and d to track largest pixel hit
-x = y = d = 0;
+x = y = d = p = 0;
 
 /*
  * Render a flame to canvas
  */
 function F() {
+
+    // increase p
+    p++;
 
     // a while loop is smaller than a for loop
     i = 50000;
@@ -160,11 +167,11 @@ function F() {
 
         // pic a function randomly
         // ~~ is the same as Math.floor (and faster)
-        g = m[~~(R()*m.length)];
+        g = m[1][~~(R()*m[1].length)];
 
         // linear equations
-        t = g[0] * x + g[1] * y + g[4];
-        y = g[2] * x + g[3] * y + g[5];
+        t = g[1] * x + g[2] * y + g[5];
+        y = g[3] * x + g[4] * y + g[6];
         // x = t;
 
         // variables for variations
@@ -178,14 +185,27 @@ function F() {
         // y = eval(o[2])[1];
         // x = t;
 
-        y = y/j;
-        x = t/j;
+        switch(g[0]) {
+            case 0:
+                // identity, do nothing
+                // OPT: remove this completely?
+            case 1:
+                // sinusoidal
+                x = M.sin(t);
+                y = M.sin(y);
+            case 2:
+                // spherical
+                x = t/j;
+                y = y/j;
+        }
+
+        // global transformation
 
         // OPT: rearrange equations to make them smaller
         // scale x and y coordinates to fit in z
         // ~~ is the same as Math.floor (and faster)
-        u = ~~( x*(w/5) + w/5 );
-        v = ~~(y*(h/5) + h);
+        u = ~~( x*(w/1) + w/1 );
+        v = ~~(y*(h/1) + h);
 
         // calculate location of pixel in image buffer
         l = u*w + v;
@@ -237,10 +257,10 @@ function D() {
     // copy buffer to canvas
     a.putImageData(z, 0, 0);
 
-    // iterate again
-    W(F, 9);
+    // iterate again, if allowed
+    if ( p < 100 )
+        W.setTimeout(F, 9);
 }
 
 // render flame
-// W(F, 9);
 F();
