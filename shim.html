@@ -1,1 +1,22 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<title>JS1k, 1k demo submission [ID]</title>
+		<meta charset="utf-8">
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<script>
+			var b = document.body;
+			var c = document.getElementsByTagName('canvas')[0];
+			var a = c.getContext('2d');
+			document.body.clientWidth; // fix bug in webkit: http://qfox.nl/weblog/218
+		</script>
+		<script>
+// start of submission //
 D=document;M=Math;W=window;function F(){for(i=5E4;i--;){g=m[4][~~(M.random()*m[4].length)];t=g[1]*x+g[2]*y+g[5];y=g[3]*x+g[4]*y+g[6];j=t*t+y*y;switch(g[0]){case 0:x=M.sin(t),y=M.sin(y);case 1:x=t/j,y/=j}Q=m[3];u=~~((x*w+Q[0])*Q[2]);v=~~((y*h+Q[1])*Q[2]);l=u*w+v;H[l]=H[l]?H[l]+1:1;H[l]>d&&(d=H[l])}z=a.createImageData(w,h);Z=z.data;for(i=w*h;i--;)t=M.log(H[i])/M.log(d),j=4*i,Z[j]=n(t,0),Z[j+1]=n(t,1),Z[j+2]=n(t,2),Z[j+3]=255;a.putImageData(z,0,0);W.setTimeout(F,9)}function I(){m=JSON.parse(J.value);D.getElementById("b").disabled=1;w=c.width=m[0][0];h=c.height=m[0][1];H=Array(w*h);F()}x=y=d=w=h=H=m=0;E=D.createElement("p");E.innerHTML="<br><button id=b onclick=I();>dream</button><button onclick=W.open(c.toDataURL('image/png'));>save</button><br><textarea id=f></textarea>";b.appendChild(E);O=[M.tan,M.sin,M.cos];function n(e,f){return 255*O[m[2][f]](e)*e*m[1][f]}m=[[900,500],[1,1,1],[0,1,2],[900,500,1],[[1,0.5,-0.5,0.4,0.5,-0.4,0],[1,0.8,0.2,-0.4,0.7,0.9,0.3]]];J=D.getElementById("f");J.value=JSON.stringify(m);
+// end of submission //
+		</script>
+	
+
+</body></html>

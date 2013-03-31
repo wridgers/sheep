@@ -6,7 +6,7 @@
  * algorithm and the electric sheep wallpaper. 
  */
 
-/* index of variables
+/* a (mostly up to date) index of variables
  *
  * a = [global] canvas 2d context
  * A = random var
@@ -38,6 +38,7 @@
  * O = [global] array of trig functions
  * p = [global] count of how many F() calls
  * q = 
+ * Q = another cache!
  * r = 
  * R = Math.random
  * s = scale value
@@ -52,17 +53,10 @@
  * Z = z.data
  */ 
 
-/* TODO list:
- *
- * manual control over focal point and zoom
- */
-
 // very useful aliases
 D=document;
 M=Math;
 W=window;
-R=M.random; 
-
 
 /*
  * Render a flame to canvas
@@ -73,9 +67,9 @@ function F() {
     i = 50000;
     while (i--) {
 
-        // pic a function randomly
+        // pick a function randomly
         // ~~ is the same as Math.floor (and faster)
-        g = m[3][~~(R()*m[3].length)];
+        g = m[4][~~(M.random()*m[4].length)];
 
         // linear equations
         t = g[1] * x + g[2] * y + g[5];
@@ -83,34 +77,27 @@ function F() {
         // x = t;
 
         // variables for variations
-        // OPT: remove the ones we don't use
         j = t*t + y*y;
-        // r  = M.sqrt(r2);
-        // T  = M.atan(x/y);
-        // P  = M.atan(y/x);
 
-        // t = eval(o[2])[0];
-        // y = eval(o[2])[1];
-        // x = t;
-
+        // i tried making these equations part of m, but eval is just
+        // sooooo slow that it doesn't work very well. :(
         switch(g[0]) {
-            case 1:
+            case 0:
                 // sinusoidal
                 x = M.sin(t);
                 y = M.sin(y);
-            case 2:
+            case 1:
                 // spherical
                 x = t/j;
                 y = y/j;
         }
 
-        // global transformation
-
-        // OPT: rearrange equations to make them smaller
         // scale x and y coordinates to fit in z
         // ~~ is the same as Math.floor (and faster)
-        u = ~~(x*w + w);
-        v = ~~(y*h + h);
+        // cache m[3]
+        Q = m[3];
+        u = ~~((x*w + Q[0])*Q[2]);
+        v = ~~((y*h + Q[1])*Q[2]);
 
         // calculate location of pixel in image buffer
         l = u*w + v;
@@ -150,22 +137,27 @@ function F() {
     a.putImageData(z, 0, 0);
 
     // do it again!
+    // (just calling F() here will cause the browser to crash, teehee)
     W.setTimeout(F, 9);
 }
 
 function I() {
-    // setup canvas and window
-    w = c.width  = W.innerWidth;
-    h = c.height = W.innerHeight;
+    // read config
+    m = JSON.parse(J.value);
 
-    // make it full screen
-    // c.style.width = w*2 + 'px';
+    // stop people from renderin twice
+    // at this point I had only 38 bytes left to play with...
+    D.getElementById('b').disabled = 1;
+
+    // setup canvas and window
+    w = c.width  = m[0][0];
+    h = c.height = m[0][1];
+
+    // make it fullscreen
+    // c.style.height = W.innerHeight + 'px';
 
     // histogram, array of hits
     H = new Array(w*h);
-
-    // convert input variables to real array we can use
-    m = JSON.parse(J.value);
     
     // go!
     F();
@@ -174,14 +166,12 @@ function I() {
 // make all these variables global.
 x = y = d = w = h = H = m = 0;
 
-// make gui element
-E = D.createElement('i');
-E.innerHTML = '<textarea id=f></textarea><button onclick=I();>▶</button><button onclick=W.open(c.toDataURL(\'image/png\'));>★</button>';
+// just makes things nicer
+// c.height = 0;
 
-// set style
-G = E.style;
-G.top = G.left = 0;
-G.position = 'absolute';
+// make gui element
+E = D.createElement('p');
+E.innerHTML = '<br><button id=b onclick=I();>dream</button><button onclick=W.open(c.toDataURL(\'image/png\'));>save</button><br><textarea id=f></textarea>';
 
 // add to dom
 b.appendChild(E);
@@ -192,21 +182,22 @@ b.appendChild(E);
 O = [M.tan,M.sin,M.cos];
 
 // compute palette based on t value
-function n(i,j) { return 255*O[m[1][j]](i)*i*m[0][j]; }
+function n(i,j) { return 255*O[m[2][j]](i)*i*m[1][j]; }
 
 // drake's cloud flame
 // [
-//     [2, 0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
-//     [2, 0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
+//     [1, 0.562482, -0.539599, 0.397861, 0.501088, -0.42992, -0.112404],
+//     [1, 0.830039, 0.16248, -0.496174, 0.750468, 0.91022, 0.288389]
 // ];
 
 m = [
-    [1, 1, 1],
-    [0, 1, 2], 
-    [0, 0, 1],
+    [900,500], // resolution
+    [1, 1, 1], // colour multiples
+    [0, 1, 2], // which O[x] to use
+    [900, 500, 1], // focal x, focal y, zoom
     [
-        [2, .56, -.53, .397, .50, -.42, -.11],
-        [2, .83, .162, -.49, .75, .910, .288]
+        [1, .5, -.5, .4, .5, -.4, 0], // equation type, coefficients a, b, c, d, e, f
+        [1, .8, .2, -.4, .7, .9, .3]
     ]
 ];
 
